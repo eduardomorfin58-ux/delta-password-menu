@@ -8,12 +8,12 @@ local player = Players.LocalPlayer
 -- ⚠️ CONFIG
 local PASSWORD = "67"
 local BASE_URL = "https://raw.githubusercontent.com/eduardomorfin58-ux/delta-password-menu/main/frames/"
-local VERSION = "v3" -- si cambias las imágenes, cambia este texto para que se vuelvan a bajar
+local VERSION = "v4" -- si cambias las imágenes, cambia este texto para que se vuelvan a bajar
 
 -- Animación (sprite sheets con fondo transparente)
-local SHEETS, PER_SHEET, COLS = 6, 18, 6
-local FRAME_W, FRAME_H = 168, 276
-local TOTAL_FRAMES, FPS = 95, 12
+local SHEETS, PER_SHEET, COLS = 6, 16, 4
+local FRAME_W, FRAME_H = 224, 228
+local TOTAL_FRAMES, FPS = 96, 12
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "PasswordMenu"
@@ -27,6 +27,15 @@ if not okParent or not gui.Parent then
 	gui.Parent = player:WaitForChild("PlayerGui")
 end
 
+-- Fondo gris suave (el juego se sigue viendo detrás)
+local dim = Instance.new("Frame")
+dim.Size = UDim2.fromScale(1, 1)
+dim.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+dim.BackgroundTransparency = 0.55
+dim.BorderSizePixel = 0
+dim.ZIndex = 0
+dim.Parent = gui
+
 -- Contenedor abajo al centro (no cubre el resto de la pantalla)
 local holder = Instance.new("Frame")
 holder.BackgroundTransparency = 1
@@ -39,7 +48,7 @@ holder.Parent = gui
 local char = Instance.new("ImageLabel")
 char.BackgroundTransparency = 1
 char.AnchorPoint = Vector2.new(0.5, 1)
-char.Position = UDim2.new(0.5, 0, 0, 14)
+char.Position = UDim2.new(0.5, 0, 0, 0)
 char.Size = UDim2.fromOffset(FRAME_W, FRAME_H)
 char.ImageRectSize = Vector2.new(FRAME_W, FRAME_H)
 char.ImageTransparency = 1
@@ -50,7 +59,7 @@ local scale = Instance.new("UIScale")
 scale.Parent = char
 local cam = workspace.CurrentCamera
 if cam then
-	scale.Scale = math.clamp((cam.ViewportSize.Y - 190) / FRAME_H, 0.4, 1.2)
+	scale.Scale = math.clamp((cam.ViewportSize.Y - 175) / FRAME_H, 0.4, 1.4)
 end
 
 -- Panel
@@ -145,6 +154,7 @@ local function submit()
 			end
 		end
 		TweenService:Create(char, TweenInfo.new(0.4), { ImageTransparency = 1 }):Play()
+		TweenService:Create(dim, TweenInfo.new(0.4), { BackgroundTransparency = 1 }):Play()
 		task.wait(0.45)
 		gui:Destroy()
 	else
