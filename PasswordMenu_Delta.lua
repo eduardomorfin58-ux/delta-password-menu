@@ -8,7 +8,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- ⚠️ CAMBIA ESTO
-local PASSWORD = "cambia_esto"
+local PASSWORD = "57"
 local VIDEO_URL = "https://raw.githubusercontent.com/eduardomorfin58-ux/delta-password-menu/main/fondo.mp4"
 local VIDEO_FILE = "delta_fondo.mp4"
 
@@ -30,18 +30,26 @@ gui.Name = "PasswordMenu"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 100
-gui.Parent = (gethui and gethui()) or playerGui
+local okParent = pcall(function() gui.Parent = (gethui and gethui()) or game:GetService("CoreGui") end)
+if not okParent or not gui.Parent then gui.Parent = playerGui end
 
 -- Video de fondo (pantalla completa, en bucle)
 local video = Instance.new("VideoFrame")
 video.Size = UDim2.fromScale(1, 1)
 video.BackgroundColor3 = Color3.new(0, 0, 0)
-video.Video = resolveVideo()
 video.Looped = true
 video.Volume = 0.5
 video.ZIndex = 1
 video.Parent = gui
-video:Play()
+
+-- El video se descarga aparte para que el menú aparezca al instante
+task.spawn(function()
+	local asset = resolveVideo()
+	if asset ~= "" and video.Parent then
+		video.Video = asset
+		video:Play()
+	end
+end)
 
 -- Panel del menú
 local panel = Instance.new("Frame")
