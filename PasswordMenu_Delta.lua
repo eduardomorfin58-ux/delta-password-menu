@@ -8,18 +8,19 @@ local player = Players.LocalPlayer
 -- ⚠️ CONFIG
 local PASSWORD = "67"
 local BASE_URL = "https://raw.githubusercontent.com/eduardomorfin58-ux/delta-password-menu/main/frames/"
-local VERSION = "v4" -- si cambias las imágenes, cambia este texto para que se vuelvan a bajar
+local VERSION = "v5" -- si cambias las imágenes, cambia este texto para que se vuelvan a bajar
 
 -- Animación (sprite sheets con fondo transparente)
 local SHEETS, PER_SHEET, COLS = 6, 16, 4
 local FRAME_W, FRAME_H = 224, 228
-local TOTAL_FRAMES, FPS = 96, 12
+local TOTAL_FRAMES, FPS = 85, 12
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "PasswordMenu"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 100
+gui.Enabled = false -- todo aparece a la vez cuando la animación está lista
 local okParent = pcall(function()
 	gui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
 end)
@@ -172,26 +173,45 @@ end
 button.Activated:Connect(submit)
 box.FocusLost:Connect(function(enter) if enter then submit() end end)
 
--- Cargar y reproducir la animación en segundo plano (el menú ya está visible)
-task.spawn(function()
-	local assets = {}
-	for i = 1, SHEETS do
-		local file = ("pwmenu_%s_sheet%d.png"):format(VERSION, i)
-		local ok, asset = pcall(function()
-			if not isfile(file) then
-				writefile(file, game:HttpGet(BASE_URL .. "sheet" .. i .. ".png"))
-			end
-			return getcustomasset(file)
-		end)
-		if not ok or not asset then
-			warn("[PasswordMenu] No se pudo cargar la animación:", asset)
-			return
-		end
-		assets[i] = asset
-	end
-	if closed then return end
+-- Descargar la animación (en paralelo) y mostrar TODO a la vez cuando esté lista
+local function show()
+	if not closed then gui.Enabled = true end
+end
+task.delay(12, show) -- por si la descarga tarda demasiado: el menú sale igual
 
+task.spawn(function()
+	local assets, pending, failed = {}, SHEETS, false
+	for i = 1, SHEETS do
+		task.spawn(function()
+			local file = ("pwmenu_%s_sheet%d.png"):format(VERSION, i)
+			local ok, asset = pcall(function()
+				if not isfile(file) then
+					writefile(file, game:HttpGet(BASE_URL .. "sheet" .. i .. ".png"))
+				end
+				return getcustomasset(file)
+			end)
+			if ok and asset then
+				assets[i] = asset
+			else
+				failed = true
+				warn("[PasswordMenu] No se pudo cargar la animación:", asset)
+			end
+			pending -= 1
+		end)
+	end
+	while pending > 0 do task.wait(0.05) end
+
+	if failed or closed then
+		show() -- sin personaje, pero el menú funciona
+		return
+	end
+
+	-- primer cuadro listo, luego se muestra todo junto
+	char.Image = assets[1]
+	char.ImageRectOffset = Vector2.new(0, 0)
 	char.ImageTransparency = 0
+	show()
+
 	local f = 0
 	while not closed and char.Parent do
 		local sheet = f // PER_SHEET + 1
